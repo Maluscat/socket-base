@@ -1,21 +1,56 @@
 import { SocketBase } from './SocketBase.js';
 
+export interface ClientOptions {
+  /**
+   * @see {@link ClientSocketBase.pingInterval}
+   * @default 0
+   */
+  pingInterval: number,
+  /**
+   * @see {@link ClientSocketBase.pingTimeout}
+   * @default 3000
+   */
+  pingTimeout: number,
+  /**
+   * @see {@link ClientSocketBase.maxReconnectTimeoutDuration}
+   * @default 10000
+   */
+  maxReconnectTimeoutDuration: number,
+  /**
+   * @see {@link ClientSocketBase.minReconnectTimeoutDuration}
+   * @default 750
+   */
+  minReconnectTimeoutDuration: number,
+}
+
+
 export class ClientSocketBase extends SocketBase {
   #pingIntervalHasChanged = false;
-  #pingIntervalID;
-  #pingInterval;
+  #pingIntervalID: number | null | undefined;
+  // @ts-ignore Propagated by getter/setter
+  #pingInterval: number;
   /**
    * Amount of time in milliseconds that is waited for a ping response.
    * If no response comes within this window, a `timeout` event will be invoked.
    */
-  pingTimeout;
+  pingTimeout: number;
 
-  #reconnectTimeoutID = null;
-  #reconnectTimeoutDuration = 250;
+  #reconnectTimeoutID: number | null = null;
+  #reconnectTimeoutDuration: number;
 
-  maxReconnectTimeoutDuration;
-  minReconnectTimeoutDuration;
-  socketURL;
+  /**
+   * Maximum timeout between reconnection attempts in milliseconds.
+   * @see {@link minReconnectTimeoutDuration}
+   */
+  maxReconnectTimeoutDuration: number;
+  /**
+   * Minimum timeout between reconnection attempts in milliseconds.
+   *
+   * After each failed reconnection attempt, the effective timeout is
+   * doubled, reaching a cap at {@link maxReconnectTimeoutDuration}.
+   */
+  minReconnectTimeoutDuration: number;
+  socketURL: string;
 
   /**
    * Interval in milliseconds in which to send a ping.
@@ -40,7 +75,7 @@ export class ClientSocketBase extends SocketBase {
     }
   }
 
-  constructor(url, {
+  constructor(url: string, {
     pingInterval = 0,
     pingTimeout = 3000,
     maxReconnectTimeoutDuration = 10000,
@@ -56,15 +91,21 @@ export class ClientSocketBase extends SocketBase {
     this.pingInterval = pingInterval;
     this.maxReconnectTimeoutDuration = maxReconnectTimeoutDuration;
     this.minReconnectTimeoutDuration = minReconnectTimeoutDuration;
+    this.#reconnectTimeoutDuration = minReconnectTimeoutDuration;
 
     this.addEventListener('open', this._socketConnected);
     this.addEventListener('close', this._socketClosed);
   }
 
-  send(message) {
+  /** Socket pass-thru. Sends the specified message. */
+  send(message: string | ArrayBufferLike | Blob | ArrayBufferView) {
     this.socket.send(message);
   }
-  sendEvent(eventType, data = {}) {
+  /**
+   * Convenience method. Sends the specified data object with
+   * the added field `evt` set to the specified event string.
+   */
+  sendEvent(eventType: string, data: Record<any, any> = {}) {
     data.evt = eventType;
     this.send(JSON.stringify(data));
   }
@@ -87,7 +128,7 @@ export class ClientSocketBase extends SocketBase {
     this._addEventsAgain();
   }
 
-  _socketClosed(e) {
+  _socketClosed(e: CloseEvent) {
     this.#trySocketReconnect();
     this.stopPingImmediately();
   }
