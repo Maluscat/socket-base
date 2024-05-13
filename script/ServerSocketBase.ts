@@ -1,4 +1,4 @@
-import { SocketBase } from 'SocketBase';
+import { SocketBase } from './SocketBase.js';
 
 export class ServerSocketBase extends SocketBase {
   /** Counts the first two pings to coordinate the timings setup. */
