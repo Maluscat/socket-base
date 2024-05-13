@@ -1,8 +1,14 @@
+;
+/**
+ * Base class that should be extended.
+ * Features base functionality such as the event and ping handlers.
+ */
 export class SocketBase {
+    /** Permanently reused ping payload. */
     static pingPayload = Uint8Array.of(0).buffer;
     #awaitPingTimeoutID = null;
-    /** @type { Record<string, Set<Function>> } */
     #eventList = {};
+    /** Denotes whether the socket is timed out. */
     isTimedOut = false;
     socket;
     constructor(socket) {
@@ -11,7 +17,11 @@ export class SocketBase {
         this.socket = socket;
     }
     // ---- Ping handling ----
-    /** @param { MessageEvent } e */
+    /**
+     * @internal
+     * @param args Arguments that are passed on to the callback that
+     *             has originally been defined in the message event.
+     */
     async _messageIntercept(e, ...args) {
         // The frontend receives data as a Blob, the backend as an ArrayBuffer.
         if (e.data instanceof Blob || e.data instanceof ArrayBuffer) {
@@ -29,33 +39,61 @@ export class SocketBase {
         }
         this.invokeEvent('_originalMessage', e, ...args);
     }
+    /**
+     * Called internally whenever no pong has been received
+     * in the required time frame after a ping.
+     */
     _missedPing() {
         this.invokeEvent('_timeout');
         this.isTimedOut = true;
     }
+    /**
+     * Called whenever a ping has been received.
+     * Can be extended with additional functionality.
+     */
     _handleReceivedPing() {
         if (this.isTimedOut) {
             this.isTimedOut = false;
             this.invokeEvent('_reconnect');
         }
     }
+    /**
+     * Clears a potential previous ping timeout and starts a new one.
+     * A ping timeout is the time frame in which a pong must be received.
+     *
+     * Must be called externally or from a super class.
+     */
     _addPingTimeout(duration) {
         this._clearPingTimeout();
         this.#awaitPingTimeoutID = setTimeout(this._missedPing, duration);
     }
+    /**
+     * Clears a potential previous ping timeout.
+     * @see {@link _addPingTimeout}
+     */
     _clearPingTimeout() {
         if (this.#awaitPingTimeoutID != null) {
             clearTimeout(this.#awaitPingTimeoutID);
             this.#awaitPingTimeoutID = null;
         }
     }
+    /**
+     * Sends a ping.
+     * A ping is always the same object defined in {@link pingPayload}.
+     */
     sendPing() {
-        this.socket.send(SocketBase.pingPayload);
+        this.socket?.send(SocketBase.pingPayload);
     }
     // ---- Event handling ----
+    /**
+     * Add an event listener to the socket.
+     * Accepts socket events (pass-thru) and custom events.
+     * @see {@link CustomEventMap}
+     */
     addEventListener(type, callback) {
         if (type === 'message') {
             this._addEvent('_originalMessage', callback);
+            // @ts-ignore
             callback = this._messageIntercept;
         }
         this._addEvent(type, callback);
@@ -63,21 +101,26 @@ export class SocketBase {
     removeEventListener(type, callback) {
         if (type === 'message') {
             this._removeEvent('_originalMessage', callback);
+            // @ts-ignore
             callback = this._messageIntercept;
         }
         this._removeEvent(type, callback);
     }
     _addEvent(type, callback) {
         if (!type.startsWith('_')) {
+            // @ts-ignore
             this.socket?.addEventListener(...arguments);
         }
         if (!(type in this.#eventList)) {
+            // @ts-ignore ???
             this.#eventList[type] = new Set();
         }
+        // @ts-ignore ???
         this.#eventList[type].add(callback);
     }
     _removeEvent(type, callback) {
         if (!type.startsWith('_')) {
+            // @ts-ignore
             this.socket?.removeEventListener(...arguments);
         }
         const callbacks = this.#eventList[type];
@@ -87,7 +130,7 @@ export class SocketBase {
         for (const [type, callbacks] of Object.entries(this.#eventList)) {
             if (!type.startsWith('_')) {
                 callbacks.forEach(callback => {
-                    this.socket.addEventListener(type, callback);
+                    this.socket?.addEventListener(type, callback);
                 });
             }
         }
@@ -95,6 +138,7 @@ export class SocketBase {
     invokeEvent(type, ...args) {
         if (type.startsWith('_')) {
             this.#eventList[type]?.forEach(callback => {
+                // @ts-ignore
                 callback(...args);
             });
         }

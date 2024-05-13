@@ -1,4 +1,9 @@
 import { SocketBase } from './SocketBase.js';
+/**
+ * Client implementation of the SocketBase, handling automatic
+ * ramping-up reconnection attempts, among other things.
+ * @see {@link SocketBase}
+ */
 export class ClientSocketBase extends SocketBase {
     #pingIntervalHasChanged = false;
     #pingIntervalID;
@@ -23,6 +28,7 @@ export class ClientSocketBase extends SocketBase {
      * doubled, reaching a cap at {@link maxReconnectTimeoutDuration}.
      */
     minReconnectTimeoutDuration;
+    /** Used socket URL. Changing it will only be reflected after a reconnect. */
     socketURL;
     /**
      * Interval in milliseconds in which to send a ping.
@@ -72,6 +78,13 @@ export class ClientSocketBase extends SocketBase {
         data.evt = eventType;
         this.send(JSON.stringify(data));
     }
+    /**
+     * Sends a ping as per the corresponding super method and
+     * activates a timeout that will send a `_timeout` event
+     * when no pong has been received in time.
+     *
+     * @see {@link SocketBase.sendPing}
+     */
     sendPing() {
         super.sendPing();
         if (this.#pingIntervalHasChanged) {
@@ -84,6 +97,10 @@ export class ClientSocketBase extends SocketBase {
         this._clearPingTimeout();
     }
     // ---- Connection handling ----
+    /**
+     * Initialize a new connection, overwriting the current {@link socket}.
+     * Does not close or cancel any currently existing socket connnection.
+     */
     initializeConnection() {
         this.socket = new WebSocket(this.socketURL);
         this._addEventsAgain();
@@ -97,6 +114,7 @@ export class ClientSocketBase extends SocketBase {
         this.#startPingInterval();
         this.isTimedOut = false;
     }
+    /** Stop trying to reconnect immediately. */
     stopReconnectionAttempt() {
         this.#reconnectTimeoutDuration = this.minReconnectTimeoutDuration;
         if (this.#reconnectTimeoutID != null) {
@@ -112,6 +130,10 @@ export class ClientSocketBase extends SocketBase {
         }, this.#reconnectTimeoutDuration);
     }
     // ---- Helper functions ----
+    /**
+     * Stop an ongoing ping interval immediately, without
+     * waiting for the current interval to finish.
+     */
     stopPingImmediately() {
         if (this.#pingIntervalID != null) {
             clearTimeout(this.#pingIntervalID);
