@@ -2,6 +2,8 @@
 export interface CustomEventMap {
   _timeout: () => any,
   _reconnect: () => any,
+  _sentPing: () => any,
+  _receivedPing: () => any,
   /** @internal */
   _originalMessage: (...args: any[]) => any
 };
@@ -72,6 +74,7 @@ export class SocketBase {
    * Can be extended with additional functionality.
    */
   _handleReceivedPing() {
+    this.invokeEvent('_receivedPing');
     if (this.isTimedOut) {
       this.isTimedOut = false;
       this.invokeEvent('_reconnect');
@@ -105,6 +108,7 @@ export class SocketBase {
    */
   sendPing() {
     this.socket?.send(SocketBase.pingPayload);
+    this.invokeEvent('_sentPing');
   }
 
 
