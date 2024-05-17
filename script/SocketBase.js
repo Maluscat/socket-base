@@ -52,6 +52,7 @@ export class SocketBase {
      * Can be extended with additional functionality.
      */
     _handleReceivedPing() {
+        this.invokeEvent('_receivedPing');
         if (this.isTimedOut) {
             this.isTimedOut = false;
             this.invokeEvent('_reconnect');
@@ -83,6 +84,7 @@ export class SocketBase {
      */
     sendPing() {
         this.socket?.send(SocketBase.pingPayload);
+        this.invokeEvent('_sentPing');
     }
     // ---- Event handling ----
     /**
