@@ -174,4 +174,11 @@ export class SocketBase {
       });
     }
   }
+  removeAllEvents() {
+    for (const [ type, callbackList ] of Object.entries(this.#eventList)) {
+      for (const callback of callbackList) {
+        this.removeEventListener(type as keyof AvailableEventMap, callback);
+      }
+    }
+  }
 }
