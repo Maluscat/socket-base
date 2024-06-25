@@ -44,8 +44,10 @@ export class SocketBase {
      * in the required time frame after a ping.
      */
     _missedPing() {
-        this.invokeEvent('_timeout');
-        this.isTimedOut = true;
+        if (!this.isTimedOut) {
+            this.invokeEvent('_timeout');
+            this.isTimedOut = true;
+        }
     }
     /**
      * Called whenever a ping has been received.
