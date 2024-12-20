@@ -1,6 +1,11 @@
 import { SocketBase } from './SocketBase.js';
 export interface ClientOptions {
     /**
+     * @see {@link ClientSocketBase.pingWindowThreshold}
+     * @default 1.25
+     */
+    pingWindowThreshold?: number;
+    /**
      * @see {@link ClientSocketBase.maxReconnectTimeoutDuration}
      * @default 10000
      */
@@ -19,10 +24,20 @@ export interface ClientOptions {
 export declare class ClientSocketBase extends SocketBase {
     #private;
     /**
-     * Median interval of the received pings,
+     * Mean interval of the received pings,
      * with a weight favoring the most recent pings.
      */
-    medianPingInterval: number;
+    meanPingInterval: number;
+    /**
+     * Denotes the ratio to the {@link meanPingInterval}
+     * (so the mean interval between two pings) in which a ping
+     * must be received before a timeout is assumed.
+     *
+     * @example
+     * The value is multiplied with {@link meanPingInterval}, so a value of 2 would
+     * mean that a ping must be received within double the mean ping interval.
+     */
+    pingWindowThreshold: number;
     /**
      * Maximum timeout between reconnection attempts in milliseconds.
      *
@@ -40,7 +55,7 @@ export declare class ClientSocketBase extends SocketBase {
     minReconnectTimeoutDuration: number;
     /** Used socket URL. Changing it will only be reflected after a reconnect. */
     socketURL: string;
-    constructor(url: string, { maxReconnectTimeoutDuration, minReconnectTimeoutDuration, }?: ClientOptions);
+    constructor(url: string, { pingWindowThreshold, maxReconnectTimeoutDuration, minReconnectTimeoutDuration, }?: ClientOptions);
     /** Socket pass-thru. Sends the specified message. */
     send(message: string | ArrayBufferLike | Blob | ArrayBufferView): void;
     /**

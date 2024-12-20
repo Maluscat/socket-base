@@ -2,6 +2,11 @@ import { SocketBase } from './SocketBase.js';
 
 export interface ClientOptions {
   /**
+   * @see {@link ClientSocketBase.pingWindowThreshold}
+   * @default 1.25
+   */
+  pingWindowThreshold?: number,
+  /**
    * @see {@link ClientSocketBase.maxReconnectTimeoutDuration}
    * @default 10000
    */
@@ -28,11 +33,21 @@ export class ClientSocketBase extends SocketBase {
   /** Timestamp of the last received ping. Used for calculating the timings. */
   #lastPingTimestamp = 0;
   /**
-   * Median interval of the received pings,
+   * Mean interval of the received pings,
    * with a weight favoring the most recent pings.
    */
-  medianPingInterval = 0;
+  meanPingInterval = 0;
 
+  /**
+   * Denotes the ratio to the {@link meanPingInterval}
+   * (so the mean interval between two pings) in which a ping
+   * must be received before a timeout is assumed.
+   *
+   * @example
+   * The value is multiplied with {@link meanPingInterval}, so a value of 2 would
+   * mean that a ping must be received within double the mean ping interval.
+   */
+  pingWindowThreshold: number;
   /**
    * Maximum timeout between reconnection attempts in milliseconds.
    *
@@ -52,6 +67,7 @@ export class ClientSocketBase extends SocketBase {
   socketURL: string;
 
   constructor(url: string, {
+    pingWindowThreshold = 1.25,
     maxReconnectTimeoutDuration = 10000,
     minReconnectTimeoutDuration = 750,
   }: ClientOptions = {}) {
@@ -60,6 +76,7 @@ export class ClientSocketBase extends SocketBase {
     this._socketConnected = this._socketConnected.bind(this);
 
     this.socketURL = url;
+    this.pingWindowThreshold = pingWindowThreshold;
     this.maxReconnectTimeoutDuration = maxReconnectTimeoutDuration;
     this.minReconnectTimeoutDuration = minReconnectTimeoutDuration;
     this.#reconnectTimeoutDuration = minReconnectTimeoutDuration;
@@ -142,17 +159,17 @@ export class ClientSocketBase extends SocketBase {
 
   /**
    * Setup or calculate all the timings.
-   * @see {@link medianPingInterval}
+   * @see {@link meanPingInterval}
    */
   #setTimings(timeElapsed: number) {
     if (this.#pingSetup <= 1) {
       if (this.#pingSetup === 1) {
-        this.medianPingInterval = timeElapsed;
+        this.meanPingInterval = timeElapsed;
       }
       this.#pingSetup++;
     } else {
-      this.medianPingInterval = (this.medianPingInterval * 4 + timeElapsed * 1) / 5;
-      this._addPingTimeout(this.medianPingInterval * 1.2);
+      this.meanPingInterval = (this.meanPingInterval * 4 + timeElapsed * 1) / 5;
+      this._addPingTimeout(this.meanPingInterval * this.pingWindowThreshold);
     }
   }
 
