@@ -58,6 +58,7 @@ export class SocketBase {
         return;
       }
     }
+    this._handlePotentialReconnect();
     callback?.(e, ...args);
   }
 
@@ -78,6 +79,14 @@ export class SocketBase {
    */
   _handleReceivedPing() {
     this.invokeEvent('_receivedPing');
+    this._handlePotentialReconnect();
+  }
+
+  /**
+   * Handles reconnection operations in case the socket is timed out.
+   * Is called whenever a message is received.
+   */
+  _handlePotentialReconnect() {
     if (this.isTimedOut) {
       this.isTimedOut = false;
       this.invokeEvent('_reconnect');

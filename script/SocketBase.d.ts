@@ -38,6 +38,11 @@ export declare class SocketBase {
      */
     _handleReceivedPing(): void;
     /**
+     * Handles reconnection operations in case the socket is timed out.
+     * Is called whenever a message is received.
+     */
+    _handlePotentialReconnect(): void;
+    /**
      * Clears a potential previous ping timeout and starts a new one.
      * A ping timeout is the time frame in which a pong must be received.
      *
