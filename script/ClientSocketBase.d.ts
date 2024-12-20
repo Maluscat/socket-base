@@ -25,6 +25,9 @@ export declare class ClientSocketBase extends SocketBase {
     medianPingInterval: number;
     /**
      * Maximum timeout between reconnection attempts in milliseconds.
+     *
+     * Setting this to a negative value disables all reconnection attempts.
+     *
      * @see {@link minReconnectTimeoutDuration}
      */
     maxReconnectTimeoutDuration: number;

@@ -35,6 +35,9 @@ export class ClientSocketBase extends SocketBase {
 
   /**
    * Maximum timeout between reconnection attempts in milliseconds.
+   *
+   * Setting this to a negative value disables all reconnection attempts.
+   *
    * @see {@link minReconnectTimeoutDuration}
    */
   maxReconnectTimeoutDuration: number;
@@ -112,11 +115,13 @@ export class ClientSocketBase extends SocketBase {
     }
   }
   #trySocketReconnect() {
-    this.#reconnectTimeoutID = setTimeout(() => {
-      this.initializeConnection();
-      this.#reconnectTimeoutDuration =
-        Math.min(this.maxReconnectTimeoutDuration, this.#reconnectTimeoutDuration * 2);
-    }, this.#reconnectTimeoutDuration);
+    if (this.maxReconnectTimeoutDuration >= 0) {
+      this.#reconnectTimeoutID = setTimeout(() => {
+        this.initializeConnection();
+        this.#reconnectTimeoutDuration =
+          Math.min(this.maxReconnectTimeoutDuration, this.#reconnectTimeoutDuration * 2);
+      }, this.#reconnectTimeoutDuration);
+    }
   }
 
   // ---- Ping handling ----
