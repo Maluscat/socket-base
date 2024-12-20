@@ -109,8 +109,10 @@ export class SocketBase {
    * A ping is always the same object defined in {@link pingPayload}.
    */
   sendPing() {
-    this.socket?.send(SocketBase.pingPayload);
-    this.invokeEvent('_sentPing');
+    if (this.socket?.readyState === 1) {
+      this.socket.send(SocketBase.pingPayload);
+      this.invokeEvent('_sentPing');
+    }
   }
 
 
