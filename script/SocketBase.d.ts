@@ -16,8 +16,8 @@ export type AvailableEventMap = CustomEventMap & {
  */
 export declare class SocketBase {
     #private;
-    /** Permanently reused ping payload. */
-    static pingPayload: ArrayBuffer;
+    /** Object that is used in the ping payload. May not be changed. */
+    static readonly pingPayload: ArrayBuffer;
     /** Denotes whether the socket is in a timed out state. */
     isTimedOut: boolean;
     socket: WebSocket | null;

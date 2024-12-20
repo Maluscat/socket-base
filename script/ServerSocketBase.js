@@ -1,12 +1,9 @@
 import { SocketBase } from './SocketBase.js';
 /**
- * Server implementation of the SocketBase, handling received pings.
+ * Server implementation of the SocketBase.
  *
- * The server is entirely independent of any set timing constants.
- * It calculates the average interval between each ping
- * (with a weight on the most recent ones) and sets its ping timeout
- * accordingly, thus naturally incorporating jitter and similar factors
- * into the equation.
+ * This class is responsible for sending pings and reacting with a
+ * timeout once a pong has not been received in the given threshold.
  *
  * @see {@link SocketBase}
  */

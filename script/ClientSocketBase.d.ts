@@ -17,9 +17,12 @@ export interface ClientOptions {
     minReconnectTimeoutDuration?: number;
 }
 /**
- * Client implementation of the SocketBase, handling automatic
- * ramping-up reconnection attempts, among other things.
- * @see {@link SocketBase}
+ * Client implementation of the SocketBase.
+ *
+ * The capabilities of this class include receiving pings from the server and
+ * immediately replying with a pong. Additionally, as soon as the socket closes
+ * (for example due to a lost connection), a reconnection attempt is started
+ * using the configurable min and max timings (see below).
  */
 export declare class ClientSocketBase extends SocketBase {
     #private;

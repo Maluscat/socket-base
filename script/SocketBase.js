@@ -4,7 +4,7 @@
  * Features base functionality such as the event and ping handlers.
  */
 export class SocketBase {
-    /** Permanently reused ping payload. */
+    /** Object that is used in the ping payload. May not be changed. */
     static pingPayload = Uint8Array.of(0).buffer;
     #awaitPingTimeoutID = null;
     #eventList = {};
