@@ -4,8 +4,6 @@ export interface CustomEventMap {
     _reconnect: () => any;
     _sentPing: () => any;
     _receivedPing: () => any;
-    /** @internal */
-    _originalMessage: (...args: any[]) => any;
 }
 export type AvailableEventMap = CustomEventMap & {
     [K in keyof WebSocketEventMap]: (this: WebSocket, ev: WebSocketEventMap[K]) => any;
@@ -24,10 +22,11 @@ export declare class SocketBase {
     constructor(socket: WebSocket | null);
     /**
      * @internal
+     * @param callback The original event callback that is called after the interception.
      * @param args Arguments that are passed on to the callback that
      *             has originally been defined in the message event.
      */
-    _messageIntercept(e: MessageEvent, ...args: any[]): Promise<void>;
+    _messageIntercept(callback: Function | null, e: MessageEvent, ...args: any[]): Promise<void>;
     /**
      * Called internally whenever no pong has been received
      * in the required time frame after a ping.

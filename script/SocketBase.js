@@ -15,14 +15,17 @@ export class SocketBase {
         this._messageIntercept = this._messageIntercept.bind(this);
         this._missedPing = this._missedPing.bind(this);
         this.socket = socket;
+        // `_addEvent` must be used because otherwise `_message` would call itself again
+        this._addEvent('message', this._messageIntercept.bind(this, null));
     }
     // ---- Ping handling ----
     /**
      * @internal
+     * @param callback The original event callback that is called after the interception.
      * @param args Arguments that are passed on to the callback that
      *             has originally been defined in the message event.
      */
-    async _messageIntercept(e, ...args) {
+    async _messageIntercept(callback, e, ...args) {
         // The frontend receives data as a Blob, the backend as an ArrayBuffer.
         if (e.data instanceof Blob || e.data instanceof ArrayBuffer) {
             let pingDataArr;
@@ -37,7 +40,7 @@ export class SocketBase {
                 return;
             }
         }
-        this.invokeEvent('_originalMessage', e, ...args);
+        callback?.(e, ...args);
     }
     /**
      * Called internally whenever no pong has been received
@@ -98,17 +101,15 @@ export class SocketBase {
      */
     addEventListener(type, callback) {
         if (type === 'message') {
-            this._addEvent('_originalMessage', callback);
             // @ts-ignore
-            callback = this._messageIntercept;
+            callback = this._messageIntercept.bind(this, callback);
         }
         this._addEvent(type, callback);
     }
     removeEventListener(type, callback) {
         if (type === 'message') {
-            this._removeEvent('_originalMessage', callback);
             // @ts-ignore
-            callback = this._messageIntercept;
+            callback = this._messageIntercept.bind(this, callback);
         }
         this._removeEvent(type, callback);
     }
