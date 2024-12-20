@@ -26,7 +26,7 @@ export class SocketBase {
   #awaitPingTimeoutID: number | null = null;
   #eventList: Partial<EventList> = {};
 
-  /** Denotes whether the socket is timed out. */
+  /** Denotes whether the socket is in a timed out state. */
   isTimedOut = false;
   socket;
 

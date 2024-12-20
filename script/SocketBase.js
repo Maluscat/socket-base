@@ -8,7 +8,7 @@ export class SocketBase {
     static pingPayload = Uint8Array.of(0).buffer;
     #awaitPingTimeoutID = null;
     #eventList = {};
-    /** Denotes whether the socket is timed out. */
+    /** Denotes whether the socket is in a timed out state. */
     isTimedOut = false;
     socket;
     constructor(socket) {

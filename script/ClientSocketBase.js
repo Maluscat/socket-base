@@ -52,10 +52,11 @@ export class ClientSocketBase extends SocketBase {
         }
     }
     /**
-     * Convenience method. Sends the specified data object with
-     * the added field `evt` set to the specified event string.
+     * Convenience method. Sends the stringified specified data object
+     * with the added field `evt` set to the specified event string.
      */
     sendEvent(eventType, data = {}) {
+        // @ts-ignore
         data.evt = eventType;
         this.send(JSON.stringify(data));
     }

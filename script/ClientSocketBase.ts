@@ -75,10 +75,11 @@ export class ClientSocketBase extends SocketBase {
     }
   }
   /**
-   * Convenience method. Sends the specified data object with
-   * the added field `evt` set to the specified event string.
+   * Convenience method. Sends the stringified specified data object
+   * with the added field `evt` set to the specified event string.
    */
   sendEvent(eventType: string, data: Record<any, any> = {}) {
+    // @ts-ignore
     data.evt = eventType;
     this.send(JSON.stringify(data));
   }
@@ -119,7 +120,7 @@ export class ClientSocketBase extends SocketBase {
   }
 
   // ---- Ping handling ----
-  _handleReceivedPing() {
+  override _handleReceivedPing() {
     const currentTime = new Date().getTime();
 
     if (this.isTimedOut) {

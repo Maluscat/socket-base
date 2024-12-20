@@ -2,12 +2,12 @@ import { SocketBase } from './SocketBase.js';
 
 export interface ServerOptions {
   /**
-   * @see {@link ClientSocketBase.pingInterval}
+   * @see {@link ServerSocketBase.pingInterval}
    * @default 0
    */
   pingInterval?: number,
   /**
-   * @see {@link ClientSocketBase.pingTimeout}
+   * @see {@link ServerSocketBase.pingTimeout}
    * @default 3000
    */
   pingTimeout?: number,
@@ -82,7 +82,7 @@ export class ServerSocketBase extends SocketBase {
     this.#startPingInterval();
   }
 
-  _handleReceivedPing() {
+  override _handleReceivedPing() {
     super._handleReceivedPing();
     this._clearPingTimeout();
   }
@@ -94,7 +94,7 @@ export class ServerSocketBase extends SocketBase {
    *
    * @see {@link SocketBase.sendPing}
    */
-  sendPing() {
+  override sendPing() {
     super.sendPing();
     if (this.#pingIntervalHasChanged) {
       this.#restartPingInterval();
