@@ -145,6 +145,7 @@ export class SocketBase {
         for (const [type, callbacks] of Object.entries(this.#eventList)) {
             if (!type.startsWith('_')) {
                 callbacks.forEach(callback => {
+                    // @ts-ignore
                     this.socket?.addEventListener(type, callback);
                 });
             }
