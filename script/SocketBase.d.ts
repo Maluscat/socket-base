@@ -21,7 +21,13 @@ export declare class SocketBase {
     socket: WebSocket | null;
     constructor(socket: WebSocket | null);
     /**
+     * Method that intercepts each registered `message` event,
+     * filters out a potential ping from the message payload,
+     * and passes it on to the original callback.
+     *
      * @internal
+     * @private
+     *
      * @param callback The original event callback that is called after the interception.
      * @param args Arguments that are passed on to the callback that
      *             has originally been defined in the message event.
@@ -66,7 +72,15 @@ export declare class SocketBase {
      */
     addEventListener<K extends keyof AvailableEventMap>(type: K, callback: AvailableEventMap[K]): void;
     removeEventListener<K extends keyof AvailableEventMap>(type: K, callback: AvailableEventMap[K]): void;
+    /**
+     * @internal
+     * @private
+     */
     _addEvent<K extends keyof AvailableEventMap>(type: K, callback: AvailableEventMap[K]): void;
+    /**
+     * @internal
+     * @private
+     */
     _removeEvent<K extends keyof AvailableEventMap>(type: K, callback: AvailableEventMap[K]): void;
     _addEventsAgain(): void;
     invokeEvent<K extends keyof AvailableEventMap>(type: K, ...args: Parameters<AvailableEventMap[K]>): void;

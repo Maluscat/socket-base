@@ -39,7 +39,13 @@ export class SocketBase {
 
   // ---- Ping handling ----
   /**
+   * Method that intercepts each registered `message` event,
+   * filters out a potential ping from the message payload,
+   * and passes it on to the original callback.
+   *
    * @internal
+   * @private
+   *
    * @param callback The original event callback that is called after the interception.
    * @param args Arguments that are passed on to the callback that
    *             has originally been defined in the message event.
@@ -54,7 +60,11 @@ export class SocketBase {
         pingDataArr = new Uint8Array(e.data);
       }
       if (pingDataArr && pingDataArr[0] === 0) {
-        this._handleReceivedPing();
+        // Using callback as simple flag that the event comes from the `SocketBase`
+        // so that the ping handler is called only exactly once
+        if (!callback) {
+          this._handleReceivedPing();
+        }
         return;
       }
     }
@@ -147,6 +157,10 @@ export class SocketBase {
     this._removeEvent(type, callback);
   }
 
+  /**
+   * @internal
+   * @private
+   */
   _addEvent<K extends keyof AvailableEventMap>(type: K, callback: AvailableEventMap[K]) {
     if (!type.startsWith('_')) {
       // @ts-ignore
@@ -159,6 +173,10 @@ export class SocketBase {
     // @ts-ignore ???
     this.#eventList[type].add(callback);
   }
+  /**
+   * @internal
+   * @private
+   */
   _removeEvent<K extends keyof AvailableEventMap>(type: K, callback: AvailableEventMap[K]) {
     if (!type.startsWith('_')) {
       // @ts-ignore
