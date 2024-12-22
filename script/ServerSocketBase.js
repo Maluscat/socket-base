@@ -70,7 +70,7 @@ export class ServerSocketBase extends SocketBase {
     sendPing() {
         super.sendPing();
         if (this.#pingIntervalHasChanged) {
-            this.#restartPingInterval();
+            this.restartPingInterval();
         }
         this._addPingTimeout(this.pingTimeout);
     }
@@ -90,7 +90,8 @@ export class ServerSocketBase extends SocketBase {
             this.#pingIntervalID = setInterval(this.sendPing, this.#pingInterval);
         }
     }
-    #restartPingInterval() {
+    /** Stop an ongoing ping interval *immediately* and immediately start it again. */
+    restartPingInterval() {
         this.stopPingImmediately();
         this.#startPingInterval();
     }

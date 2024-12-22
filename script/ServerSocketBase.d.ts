@@ -55,4 +55,6 @@ export declare class ServerSocketBase extends SocketBase {
      * waiting for the current interval to finish.
      */
     stopPingImmediately(): void;
+    /** Stop an ongoing ping interval *immediately* and immediately start it again. */
+    restartPingInterval(): void;
 }
