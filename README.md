@@ -13,7 +13,7 @@ Main features:
 **Important**: This library exclusively uses web technologies and thus assumes
 the existence of a global `WebSocket` object by web standards. On the server
 side, this makes it compatible with Deno (all versions) and NodeJS from version
-22.0.0 onwards.
+22.0.0 onwards (and perhaps more runtimes I don't know of).
 
 I have not yet tested NodeJS compatibility and I'd greatly appreciate feedback
 in that regard!
@@ -21,9 +21,8 @@ in that regard!
 
 ## Installation
 ### Download
-All required files are in the [`./script`](./script) directory.
-You can choose to omit either the JS or TS versions depending on your needs
-and can additionally fetch the `d.ts` files for type checking.
+All required files are in the [`./script`](./script) directory,
+fetch whatever file format suits your needs!
 
 ### Package manager
 Available on npm under `@maluscat/socket-base`. Use your favorite package manager:
@@ -34,8 +33,8 @@ npm install @maluscat/socket-base
 ```
 
 ### Git submodules
-You can also use [Git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules),
-which is a powerful tool capable of replacing a package manager for simple projects.
+[Git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
+is a powerful tool capable of replacing a package manager for simple projects.
 
 Setup:
 ```sh
@@ -54,20 +53,33 @@ git submodule update --remote
 
 
 ## Usage
-There are two main components to this library, both of which need to be used
-since they communicate with each other: The `ClientSocketBase` for use by the
-client and the `ServerSocketBase` for use by the server.
+This library comes with two main components, the `ClientSocketBase` for use by
+the client and the `ServerSocketBase` for use by the server. Both need to be
+used since they communicate with each other.
+
+Both classes share two useful properties:
+- `sock`: The underlying WebSocket
+- `isTimedOut`: A flag denoting whether the current connection has timed out as
+  per the rules described below.
+
+See the [docs](#docs) for a full overview.
+
 
 ### Events
 Events are the same for both classes. The methods `addEventListener(type, callback)`
-and `removeEventListener(type, callback)` emit all of the `WebSocket`'s events
-along with the custom events below.
+and `removeEventListener(type, callback)` pass-through all `WebSocket` events and
+emit additional custom events.
 
-These methods respect the fact that `sock` may be volatile (as it is in the
-`ClientSocketBase`) and use an internal cache to keep track and re-apply
-all events as needed!
+**Important:** Instead of registering events on the `sock` itself, you
+should always use the event operations described above for two reasons:
+1. They respect the fact that `sock` may be volatile (as it is in the
+   `ClientSocketBase`) and use an internal cache to keep track and re-apply all
+   events when the underlying WebSocket changes.
+2. They automatically filter out ping payloads on `message` events, which would
+   otherwise likely clash with your own message handling logic.
 
-Available custom events (no parameters are passed):
+#### Available custom events
+No parameters will be passed to any of them.
 <dl>
 <dt><code>_timeout</code></dt>
 <dd>
@@ -95,9 +107,10 @@ A ping has been sent.
 
 ### `ClientSocketBase`
 The capabilities of this class include receiving pings from the server and
-immediately replying with a pong. Additionally, as soon as the socket closes
-(for example due to a lost connection), a reconnection attempt is started using
-the configurable min and max timings (see below).
+immediately replying with a pong, causing a timeout event when no ping has been
+received in the expected time. Additionally, as soon as the socket closes (for
+example due to a lost connection), a reconnection attempt is started using the
+configurable min and max timings (see below).
 
 **Important:** Keep in mind that ultimately, the browser will dictate the
 connection timings. If the browser has been trying to reestablish a socket
@@ -108,6 +121,8 @@ attempt to propagate!
 The constructor takes the WebSocket URL and configuration options (optional),
 here with their default values:
 ```ts
+import { ClientSocketBase } from './socket-base/script/ClientSocketBase.js';
+
 const socket = new ClientSocketBase('https://example.com/socket', {
   /**
    * Denotes the ratio to the mean interval between two pings
@@ -137,7 +152,6 @@ All options are present as class properties and can be changed anytime.
 **Calling the constructor does not establish a WebSocket connection yet!**
 In order to do this, you must manually call `initializeConnection()`.
 
-
 #### Ping timeout
 The time between recently received pings is weighted and stored in
 `meanPingInterval`, which helps make the class independent of any constants
@@ -146,34 +160,74 @@ If a ping takes longer to be received than the ratio denoted by
 `pingWindowThreshold` (see above) to this mean interval, a timeout is
 assumed and a timeout event is dispatched.
 
-
 #### Useful methods
-See the [docs](https://docs.malus.zone/socket-base/#ClientSocketBase.ClientSocketBase).
 The most useful methods are `send(message)` (alias to `sock.send(message)`)
 and `initializeConnection()`.
+See the [docs](https://docs.malus.zone/socket-base/#ClientSocketBase.ClientSocketBase)
+for a complete overview.
 
 
 ### `ServerSocketBase`
 This class is responsible for sending pings and reacting with a timeout once a
-pong has not been received in the given threshold.
+pong has not been received in the given threshold. This is all the class does!
+
+#### Initialization
+The constructor takes a WebSocket that must be acquired beforehand and
+configuration options (optional), here with the default values:
+```ts
+import { ServerSocketBase } from './socket-base/script/ServerSocketBase.js';
+
+const sock = /* Acquire a WebSocket, for example by upgrading a connection */;
+const socket = new ServerSocketBase(sock, {
+  /**
+   * Interval in milliseconds in which to send a ping.
+   * Can be changed on the fly, in which case the interval becomes
+   * active once the currently awaited ping has fired.
+   *
+   * Set to 0 to disable.
+   */
+  pingInterval: 0,
+  /**
+   * Amount of time in milliseconds that is waited for a ping response.
+   * If no response comes within this window, a `timeout` event will be
+   * invoked and a reconnection attempt is started.
+   */
+  pingTimeout: 3000,
+});
+```
+As you can see, pings will not be emitted by default unless a ping interval is
+configured.
+
+#### Stopping the ping
+When you want to stop the ping action, you have two options:
+1. Stop the ping after the next ping by setting the `pingInterval` property to 0.
+2. Stop the ping immediately using the `stopPingImmediately()` method.
+   If you want to start it again, use `restartPingInterval()`.
 
 
 ### Advanced usage
-The underlying `SocketBase` can obviously be extended as well for more advanced
-use cases! All methods and properties are sufficiently documented, so feel free
-to have a look at the [docs](#docs)!
+Any of the provided classes, including the underlying `SocketBase`, can
+obviously be extended as well for more advanced use cases! All methods and
+properties are sufficiently documented, so feel free to have a look at the
+[docs](#docs)!
 
 
 ## Example
 My project [Scratchet](https://gitlab.com/Maluscat/scratchet) utilizes this
-library in the
-[ScratchetSocketBase](https://gitlab.com/Maluscat/scratchet/-/blob/main/static/script/socket/ScratchetSocketBase.js)
-by extending it. It mostly reacts to events to display user information.
+library by extending the `ClientSocketBase` in the
+[ScratchetSocketBase](https://gitlab.com/Maluscat/scratchet/-/blob/main/static/script/socket/ScratchetSocketBase.js),
+mainly to react to events in order to display user information.
 
 
 ## Docs
-See the generated [docs](https://docs.malus.zone/socket-base/) for a more
-in-depth overview of the library.
+See the [generated documentation](https://docs.malus.zone/socket-base/) for a more
+in-depth overview of the library (even though there's not much more to it than
+described here).
+
+
+## Contribution
+Any bug reports, feature requests or other feedback, along with pull requests, are
+greatly appreciated!
 
 
 ## License
