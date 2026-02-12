@@ -1,6 +1,6 @@
 {
   "name": "@maluscat/socket-base",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Maluscat <maluscat@proton.me> (https://malus.zone/)",
   "license": "ISC",
   "description": "Tiny abstraction layer over a WebSocket that automatically handles pings, timeouts and reconnects.",
