@@ -64,7 +64,7 @@ export class ServerSocketBase extends SocketBase {
     this._socketClosed = this._socketClosed.bind(this);
     this._socketConnected = this._socketConnected.bind(this);
     this.sendPing = this.sendPing.bind(this);
-    
+
     this.pingTimeout = pingTimeout;
     this.pingInterval = pingInterval;
 
@@ -113,6 +113,7 @@ export class ServerSocketBase extends SocketBase {
   #startPingInterval() {
     if (this.#pingInterval > 0) {
       this.#pingIntervalID = setInterval(this.sendPing, this.#pingInterval);
+      this.sendPing();
     }
   }
 

@@ -88,6 +88,7 @@ export class ServerSocketBase extends SocketBase {
     #startPingInterval() {
         if (this.#pingInterval > 0) {
             this.#pingIntervalID = setInterval(this.sendPing, this.#pingInterval);
+            this.sendPing();
         }
     }
     /** Stop an ongoing ping interval *immediately* and immediately start it again. */
