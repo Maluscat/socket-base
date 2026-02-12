@@ -8,7 +8,13 @@ export class SocketBase {
     static pingPayload = Uint8Array.of(0).buffer;
     #awaitPingTimeoutID = null;
     #eventList = {};
-    /** Denotes whether the socket is in a timed out state. */
+    /**
+     * Denotes whether the socket is in a timed out state.
+     *
+     * @remarks
+     * *Warning*: Do not modify directly. Instead, use
+     * {@link handlePotentialReconnect}.
+     */
     isTimedOut = false;
     socket;
     constructor(socket) {
@@ -50,7 +56,7 @@ export class SocketBase {
                 return;
             }
         }
-        this._handlePotentialReconnect();
+        this.handlePotentialReconnect();
         callback?.(e, ...args);
     }
     /**
@@ -69,13 +75,18 @@ export class SocketBase {
      */
     _handleReceivedPing() {
         this.invokeEvent('_receivedPing');
-        this._handlePotentialReconnect();
+        this.handlePotentialReconnect();
     }
     /**
      * Handles reconnection operations in case the socket is timed out.
-     * Is called whenever a message is received.
+     *
+     * @remarks
+     * Should be called on any action which demonstrates the aliveness of the
+     * connection. By default, these are any received messages. In a client
+     * implementation, the successful connection of a WebSocket is also such an
+     * action.
      */
-    _handlePotentialReconnect() {
+    handlePotentialReconnect() {
         if (this.isTimedOut) {
             this.isTimedOut = false;
             this.invokeEvent('_reconnect');

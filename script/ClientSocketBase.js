@@ -92,7 +92,7 @@ export class ClientSocketBase extends SocketBase {
     }
     _socketConnected() {
         this.stopReconnectionAttempt();
-        this.isTimedOut = false;
+        this.handlePotentialReconnect();
     }
     /** Stop trying to reconnect immediately. */
     stopReconnectionAttempt() {

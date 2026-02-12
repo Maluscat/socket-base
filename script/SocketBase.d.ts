@@ -16,7 +16,13 @@ export declare class SocketBase {
     #private;
     /** Object that is used in the ping payload. May not be changed. */
     static readonly pingPayload: ArrayBuffer;
-    /** Denotes whether the socket is in a timed out state. */
+    /**
+     * Denotes whether the socket is in a timed out state.
+     *
+     * @remarks
+     * *Warning*: Do not modify directly. Instead, use
+     * {@link handlePotentialReconnect}.
+     */
     isTimedOut: boolean;
     socket: WebSocket | null;
     constructor(socket: WebSocket | null);
@@ -45,9 +51,14 @@ export declare class SocketBase {
     _handleReceivedPing(): void;
     /**
      * Handles reconnection operations in case the socket is timed out.
-     * Is called whenever a message is received.
+     *
+     * @remarks
+     * Should be called on any action which demonstrates the aliveness of the
+     * connection. By default, these are any received messages. In a client
+     * implementation, the successful connection of a WebSocket is also such an
+     * action.
      */
-    _handlePotentialReconnect(): void;
+    handlePotentialReconnect(): void;
     /**
      * Clears a potential previous ping timeout and starts a new one.
      * A ping timeout is the time frame in which a pong must be received.
